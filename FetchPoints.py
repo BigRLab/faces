@@ -63,13 +63,15 @@ def processImage(imagePath, imageName, mongoCollection, malefemale):
 	print( "Recieved Raw Image Data for {}".format( imagePath ) )
 
 	parsed_json = r.json()
-	parsed_json['file_name']=imageName
-	parsed_json['male_female']=malefemale[imageName]
-
-	result = mongoCollection.insert_one(parsed_json)
-
-	print( "MongoDB ID: {}".format( result.inserted_id ) )
 	print( parsed_json )
+
+	key = "success"
+	if(key in parsed_json and parsed_json[key] == True ):
+		parsed_json['file_name']=imageName
+		parsed_json['male_female']=malefemale[imageName]
+
+		result = mongoCollection.insert_one(parsed_json)
+		print( "MongoDB ID: {}".format( result.inserted_id ) )
 	
 	return
 
