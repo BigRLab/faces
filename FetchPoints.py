@@ -23,23 +23,23 @@ def main():
 	collection = db.raw_image_points
 
 	# Get all image attributes - namely male or female
-	malefemale = {}
+	malefemaleDict = {}
 	with open("D:\LFW\MaleFemale.txt") as f:
 		for line in f:
 			(key, val) = line.split()
-			malefemale[key] = val
+			malefemaleDict[key] = val
 
 	pool = ThreadPool(3)
-	results = pool.starmap(processImage, zip(fullImagePaths, imageNames, itertools.repeat(collection), itertools.repeat(malefemale)))
+	results = pool.starmap(processImage, zip(fullImagePaths, imageNames, itertools.repeat(collection), itertools.repeat(malefemaleDict)))
 	pool.close()
 	pool.join()
 
 	return
 
 #-------------------------------
-def processImage(imagePath, imageName, mongoCollection, malefemale):
+def processImage(imagePath, imageName, mongoCollection, malefemaleDict):
 	# No attribute available - exit as we cant train using this image
-	if imageName not in malefemale:
+	if imageName not in malefemaleDict:
 		return
 	
 	# Private key for API
@@ -68,7 +68,7 @@ def processImage(imagePath, imageName, mongoCollection, malefemale):
 	key = "success"
 	if(key in parsed_json and parsed_json[key] == True ):
 		parsed_json['file_name']=imageName
-		parsed_json['male_female']=malefemale[imageName]
+		parsed_json['male_female']=malefemaleDict[imageName]
 
 		result = mongoCollection.insert_one(parsed_json)
 		print( "MongoDB ID: {}".format( result.inserted_id ) )
