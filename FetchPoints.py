@@ -41,7 +41,12 @@ def processImage(imagePath, imageName, mongoCollection, malefemaleDict):
 	# No attribute available - exit as we cant train using this image
 	if imageName not in malefemaleDict:
 		return
-	
+
+	cursor = mongoCollection.find({"file_name": imageName})
+	if cursor.count() > 0:
+		print( "Image already processed - skipping {}".format( imageName ) )
+		return
+
 	# Private key for API
 	headers = {
 		"x-api-key":"KVz3VVGVA19hOrEFlvQoqao29z3qdht66IiHplK8",
@@ -66,7 +71,7 @@ def processImage(imagePath, imageName, mongoCollection, malefemaleDict):
 	print( parsed_json )
 
 	key = "success"
-	if(key in parsed_json and parsed_json[key] == True ):
+	if key in parsed_json and parsed_json[key] == True:
 		parsed_json['file_name']=imageName
 		parsed_json['male_female']=malefemaleDict[imageName]
 
