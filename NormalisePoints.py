@@ -11,7 +11,7 @@ def main():
 
 	# Go through all the raw images
 	for image_json in raw_collection.find():
-		processImage(image_json, normalised_collection, 1000, 1200)
+		processImage(image_json, normalised_collection, 100, 120)
 
 	return
 
