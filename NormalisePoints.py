@@ -71,6 +71,7 @@ def normalise_landmarks(face_landmarks, face_boundary, normalised_width, normali
 def fetch_all_points( raw_landmarks ):
 	all_points = []
 
+	# flatten and return all points, we dont care about which part of the face they relate to for now
 	element = raw_landmarks[ 0 ][ 0 ]
 	all_points.extend(element[ "nose_bridge" ])
 	all_points.extend(element[ "left_eye" ])
