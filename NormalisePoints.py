@@ -1,11 +1,16 @@
 from pymongo import MongoClient
 import math
-
+import configparser
 
 # -------------------------------
 def main():
+    parser = configparser.ConfigParser()
+    parser.read('faces.cfg')
+
     # Init MongoDB connection
-    client = MongoClient('mongodb://fetcher:fetcherpass@ds119395.mlab.com:19395/faces_db')
+    conn = parser.get('mongodb', 'conn')
+    print(conn)
+    client = MongoClient(conn)
     db = client.faces_db
     raw_collection = db.raw_image_points
     normalised_collection = db.normalised_collection
