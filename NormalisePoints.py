@@ -2,6 +2,7 @@ from pymongo import MongoClient
 import math
 import configparser
 
+
 # -------------------------------
 def main():
     parser = configparser.ConfigParser()
@@ -9,7 +10,6 @@ def main():
 
     # Init MongoDB connection
     conn = parser.get('mongodb', 'conn')
-    print(conn)
     client = MongoClient(conn)
     db = client.faces_db
     raw_collection = db.raw_image_points
@@ -17,22 +17,23 @@ def main():
 
     # Go through all the raw images
     for image_json in raw_collection.find():
-        processImage(image_json, normalised_collection, 40, 40)
+        process_image(image_json, normalised_collection,
+                      parser.getint("normalised_size", "width"), parser.getint("normalised_size", "height"))
 
     return
 
 
 # -------------------------------
-def processImage(image_json, normalised_collection, normalised_width, normalised_height):
+def process_image(image_json, normalised_collection, normalised_width, normalised_height):
     # In case we have already done this one
     cursor = normalised_collection.find({"file_name": image_json["file_name"]})
     if cursor.count() > 0:
         print("Image already processed - skipping {}".format(image_json["file_name"]))
         return
 
-        # for debugging Romano_Prodi_0005
-    if image_json["file_name"] != "Aaron_Eckhart_0001.jpg":
-        return
+    # for debugging Romano_Prodi_0005
+    #if image_json["file_name"] != "Aaron_Eckhart_0001.jpg":
+    #    return
 
     print(image_json)
 
@@ -69,6 +70,7 @@ def processImage(image_json, normalised_collection, normalised_width, normalised
     # print( json )
 
     return
+
 
 # -------------------------------
 def print_ascii_face(binary_landmarks, width):
