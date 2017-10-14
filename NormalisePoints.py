@@ -52,11 +52,15 @@ def processImage(image_json, normalised_collection, normalised_width, normalised
 	binary_landmarks = convert_binary_landmarks( normalised_landmarks, normalised_width, normalised_height )
 
 	for i in range( len( binary_landmarks ) ):
-		print( binary_landmarks[ i ], end="" )
+		if binary_landmarks[ i ] == 1:
+			print( "X", end="" )
+		else:
+			print( ".", end="" )
+
 		if (i + 1) % normalised_width == 0:
 			print( "" )
 		
-	json = {"file_name": image_json["file_name"],"normalised_landmarks":normalised_landmarks}
+	json = {"file_name": image_json["file_name"],"normalised_landmarks":normalised_landmarks,"binary_landmarks":binary_landmarks,"male_female":image_json["male_female"]}
 
 	#result = normalised_collection.insert_one(json)
 	#print( "MongoDB ID: {}".format( result.inserted_id ) )
@@ -78,13 +82,13 @@ def move_image_top_left( face_landmarks, face_boundary ):
 
 #-------------------------------
 def convert_binary_landmarks( normalised_landmarks, normalised_width, normalised_height ):
-	binary_array = ["."] * normalised_width * normalised_height
+	binary_array = [0] * normalised_width * normalised_height
 
 	print( "Size {}".format( len( binary_array ) ) )
 
 	for mark in normalised_landmarks:
 		#print( "mark[ 0 ] {}, mark[ 1 ] {}, index {}".format( mark[ 0 ], mark[ 1 ], mark[ 1 ] * normalised_width + mark[ 0 ] ) )
-		binary_array[ mark[ 1 ] * normalised_width + mark[ 0 ] ] = "X"
+		binary_array[ mark[ 1 ] * normalised_width + mark[ 0 ] ] = 1
 
 	return binary_array
 
