@@ -51,7 +51,7 @@ def processImage(image_json, normalised_collection, normalised_width, normalised
 	# Convert to binary true false array to represent each point
 	binary_landmarks = convert_binary_landmarks( normalised_landmarks, normalised_width, normalised_height )
 
-	for i in range(0, len( binary_landmarks ) - 1):
+	for i in range( len( binary_landmarks ) ):
 		print( binary_landmarks[ i ], end="" )
 		if (i + 1) % normalised_width == 0:
 			print( "" )
