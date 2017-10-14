@@ -9,7 +9,7 @@ import os
 #-------------------------------
 def main():
 	# Get all the images - each image name is unique
-	mypath = 'D:\LFW\lfw_funneled'
+	mypath = 'D:\LFW\lfw_funneled\Aaron_Eckhart'
 	fullImagePaths = []
 	imageNames = []
 	for (dirpath, dirnames, filenames) in os.walk(mypath):
@@ -18,7 +18,7 @@ def main():
 			imageNames.append(filename)
 
 	# Init MongoDB connection
-	client = MongoClient('mongodb://localhost:27017/')
+	client = MongoClient('mongodb://fetcher:fetcherpass@ds119395.mlab.com:19395/faces_db')
 	db = client.faces_db
 	collection = db.raw_image_points
 

@@ -4,14 +4,14 @@ import math
 #-------------------------------
 def main():
 	# Init MongoDB connection
-	client = MongoClient('mongodb://localhost:27017/')
+	client = MongoClient('mongodb://fetcher:fetcherpass@ds119395.mlab.com:19395/faces_db')
 	db = client.faces_db
 	raw_collection = db.raw_image_points
 	normalised_collection = db.normalised_collection
 
 	# Go through all the raw images
 	for image_json in raw_collection.find():
-		processImage(image_json, normalised_collection, 100, 120)
+		processImage(image_json, normalised_collection, 40, 40)
 
 	return
 
@@ -23,8 +23,8 @@ def processImage(image_json, normalised_collection, normalised_width, normalised
 		print( "Image already processed - skipping {}".format( image_json["file_name"] ) )
 		return
 
-	#for debugging
-	if image_json["file_name"] != "Romano_Prodi_0005.jpg":
+	#for debugging Romano_Prodi_0005 
+	if image_json["file_name"] != "Aaron_Eckhart_0001.jpg":
 		return
 
 	print( image_json )
@@ -35,9 +35,27 @@ def processImage(image_json, normalised_collection, normalised_width, normalised
 	# flatten and return all points, we dont care about which part of the face they relate to for now
 	face_landmarks = fetch_all_points( image_json["faces"][0]["landmarks"] )
 
-	face_boundary = image_json["faces"][0]["bounding_box"]
-	normalised_landmarks = normalise_landmarks( face_landmarks, face_boundary, normalised_width, normalised_height )
+	print( "face_landmarks: {}".format( face_landmarks ) )
 
+	# boundary of the face within the photo
+	face_boundary = image_json["faces"][0]["bounding_box"]
+
+	# remove offset from top left corner
+	top_left = move_image_top_left( face_landmarks, face_boundary )
+
+	print( "face_boundary: {}".format( face_boundary ) )
+	print( "top_left: {}".format( top_left ) )
+	print()
+	normalised_landmarks = normalise_landmarks( top_left, face_boundary, normalised_width, normalised_height )
+
+	# Convert to binary true false array to represent each point
+	binary_landmarks = convert_binary_landmarks( normalised_landmarks, normalised_width, normalised_height )
+
+	for i in range(0, len( binary_landmarks ) - 1):
+		print( binary_landmarks[ i ], end="" )
+		if (i + 1) % normalised_width == 0:
+			print( "" )
+		
 	json = {"file_name": image_json["file_name"],"normalised_landmarks":normalised_landmarks}
 
 	#result = normalised_collection.insert_one(json)
@@ -48,21 +66,56 @@ def processImage(image_json, normalised_collection, normalised_width, normalised
 	return
 
 #-------------------------------
+def move_image_top_left( face_landmarks, face_boundary ):
+	centered_marks = []
+
+	for point in face_landmarks:
+		x = math.floor( point[0] - face_boundary[0] )
+		y = math.floor( point[1] - face_boundary[1] )
+		centered_marks.append( [ x, y ] )
+
+	return centered_marks
+
+#-------------------------------
+def convert_binary_landmarks( normalised_landmarks, normalised_width, normalised_height ):
+	binary_array = ["."] * normalised_width * normalised_height
+
+	print( "Size {}".format( len( binary_array ) ) )
+
+	for mark in normalised_landmarks:
+		#print( "mark[ 0 ] {}, mark[ 1 ] {}, index {}".format( mark[ 0 ], mark[ 1 ], mark[ 1 ] * normalised_width + mark[ 0 ] ) )
+		binary_array[ mark[ 1 ] * normalised_width + mark[ 0 ] ] = "X"
+
+	return binary_array
+
+#-------------------------------
 def normalise_landmarks(face_landmarks, face_boundary, normalised_width, normalised_height):
 	normalised_landmarks = []
 
 	face_width = face_boundary[2] - face_boundary[0]
 	face_height = face_boundary[3] - face_boundary[1]
 
+	print( "face_width {}, face_height {}".format( face_width, face_height ) )
+
 	width_ratio = normalised_width / face_width
 	height_ratio = normalised_height / face_height
 
-	print( face_width )
-	print( face_height )
+	print( "width_ratio {}, height_ratio {}".format( width_ratio, height_ratio ) )
 
+	smaller_ratio = width_ratio
+	height_adjust = ( normalised_height - ( face_height * smaller_ratio ) ) / 2
+	width_adjust = 0
+	if height_ratio < width_ratio:
+		smaller_ratio = height_ratio
+		height_adjust = 0
+		width_adjust = ( normalised_width - ( face_width * smaller_ratio ) ) / 2
+
+	print( "smaller_ratio {}, width_adjust {}, height_adjust {}".format( smaller_ratio, width_adjust, height_adjust ) )
+	
 	for point in face_landmarks:
-		x = math.ceil(( point[0] - face_boundary[0] ) * width_ratio )
-		y = math.ceil(( point[1] - face_boundary[1] ) * height_ratio )
+		x = min( normalised_width - 1, math.ceil( point[0] * smaller_ratio + width_adjust ) )
+		y = min( normalised_height - 1, math.ceil( point[1] * smaller_ratio + height_adjust ) )
+		print( [x,y], end=" " )
 		normalised_landmarks.append([ x, y ])
 
 	return normalised_landmarks
