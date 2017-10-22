@@ -37,7 +37,10 @@ def main(_):
     accuracy = tf.reduce_mean(tf.cast(correct_prediction, tf.float32))
     images = pivoted_data[0]
     labels = pivoted_data[1]
-    print(sess.run(accuracy, feed_dict={x: images, y_truth: labels}))
+
+    # feed_dict is like named arguments for the accuracy function, our function requires x and y_truth as arguments
+    accuracy_percentage = sess.run(accuracy, feed_dict={x: images, y_truth: labels})
+    print("Model accuracy: {}".format(accuracy_percentage))
 
 
 def import_data(parser):
@@ -50,11 +53,25 @@ def import_data(parser):
     eval_collection = db.eval_collection
 
     image_data = []
+    male_count = 0
+
+    pipeline = [
+        {"$match": {"male_female": "-1"}},
+        {"$group": {"_id": "$male_female", "count": {"$sum": 1}}},
+    ]
+    cursor = eval_collection.aggregate(pipeline)
+    for entry in cursor:
+        female_images = entry["count"]
+        print("Number of female images: {}".format(female_images))
 
     for image_json in eval_collection.find():
         male_female = [0, 1]
         if int(image_json["male_female"]) > 0:
+            if male_count >= female_images: # there are many more male images, we dont use them to ensure no bias result
+                continue
+
             male_female = [1, 0]
+            male_count += 1
 
         data = ( image_json["binary_landmarks"], male_female )
         image_data.append(data)

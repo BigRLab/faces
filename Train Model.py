@@ -47,9 +47,10 @@ def main(_):
     training_data = import_data(parser)
 
     # Train
-    for step in range(1000):
+    for step in range(10):
         print("Training step {}".format(step))
-        batch_xs, batch_ys = get_random_sample(training_data, 100)
+        batch_xs, batch_ys = get_random_sample(training_data, 1000)
+        # feed_dict is like named arguments for the accuracy function, our function requires x and y_truth as arguments
         sess.run(train_step, feed_dict={x: batch_xs, y_truth: batch_ys})
 
     saver.save(sess, parser.get("tensor_model", "model_path"))
@@ -65,11 +66,25 @@ def import_data(parser):
     training_collection = db.training_collection
 
     image_data = []
+    male_count = 0
+
+    pipeline = [
+        {"$match": {"male_female": "-1"}},
+        {"$group": {"_id": "$male_female", "count": {"$sum": 1}}},
+    ]
+    cursor = training_collection.aggregate(pipeline)
+    for entry in cursor:
+        female_images = entry["count"]
+        print("Number of female images: {}".format(female_images))
 
     for image_json in training_collection.find():
         male_female = [0, 1]
         if int(image_json["male_female"]) > 0:
+            if male_count >= female_images: # there are many more male images, we dont use them to ensure no bias result
+                continue
+
             male_female = [1, 0]
+            male_count += 1
 
         data = ( image_json["binary_landmarks"], male_female )
         image_data.append(data)
