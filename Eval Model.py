@@ -26,7 +26,7 @@ def main(_):
     sess = tf.InteractiveSession()
     saver = tf.train.Saver(max_to_keep=None)
 
-    saver.restore(sess, "D:\LFW\model.ckpt")
+    saver.restore(sess, parser.get("tensor_model", "model_path"))
 
     # Import data
     eval_data = import_data(parser)

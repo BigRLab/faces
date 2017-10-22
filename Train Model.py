@@ -52,7 +52,7 @@ def main(_):
         batch_xs, batch_ys = get_random_sample(training_data, 100)
         sess.run(train_step, feed_dict={x: batch_xs, y_truth: batch_ys})
 
-    saver.save(sess, 'D:\LFW\model.ckpt')
+    saver.save(sess, parser.get("tensor_model", "model_path"))
 
 
 def import_data(parser):
