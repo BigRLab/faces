@@ -14,9 +14,6 @@ def main(_):
     normalised_width = parser.getint("normalised_size", "width")
     normalised_height = parser.getint("normalised_size", "height")
 
-    # Import data
-    data = import_data(parser)
-
     # Create the model
     binary_array_size = normalised_width * normalised_height
 
@@ -46,17 +43,23 @@ def main(_):
 
     saver = tf.train.Saver(max_to_keep=None)
 
+    # Import data
+    training_data = import_data(parser)
+
     # Train
     for step in range(1000):
-        batch_xs, batch_ys = get_random_sample(data, 100)
-        sess.run(train_step, feed_dict={x: batch_xs, y_predict: batch_ys})
+        print("Training step {}".format(step))
+        batch_xs, batch_ys = get_random_sample(training_data, 100)
+        sess.run(train_step, feed_dict={x: batch_xs, y_truth: batch_ys})
 
     saver.save(sess, 'D:\LFW\model.ckpt')
 
 
 def import_data(parser):
+    print("Retrieving training dataset")
+
     # Init MongoDB connection
-    conn = parser.get('mongodb', 'conn')
+    conn = parser.get('mongodb', 'training_conn')
     client = MongoClient(conn)
     db = client.faces_db
     training_collection = db.training_collection
@@ -65,12 +68,13 @@ def import_data(parser):
 
     for image_json in training_collection.find():
         male_female = [0, 1]
-        if(image_data["male_female"] > 0):
+        if int(image_json["male_female"]) > 0:
             male_female = [1, 0]
 
         data = ( image_json["binary_landmarks"], male_female )
         image_data.append(data)
 
+    print("Training dataset size: {}".format(len(image_data)))
     return image_data
 
 

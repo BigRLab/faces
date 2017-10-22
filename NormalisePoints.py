@@ -17,7 +17,7 @@ def main():
 
     # Go through all the raw images
     for image_json in raw_collection.find():
-        process_image(image_json, normalised_collection,
+        json = process_image(image_json, normalised_collection,
                       parser.getint("normalised_size", "width"), parser.getint("normalised_size", "height"))
 
     return
@@ -30,15 +30,16 @@ def process_image(image_json, normalised_collection, normalised_width, normalise
     if cursor.count() > 0:
         print("Image already processed - skipping {}".format(image_json["file_name"]))
         return
+    else:
+        print("Processing {}".format(image_json["file_name"]))
 
     # for debugging Romano_Prodi_0005
-    #if image_json["file_name"] != "Aaron_Eckhart_0001.jpg":
+    #if image_json["file_name"] != "Bill_Simon_0015.jpg":
     #    return
 
-    print(image_json)
-
-    # if len( image_json["faces"][0]["landmarks"][0][0] ) > 1:
-    #	return
+    if len( image_json["faces"] ) > 1:
+        print("Skipping image {} due to multiple faces".format(image_json["file_name"]))
+        return
 
     # flatten and return all points, we dont care about which part of the face they relate to for now
     face_landmarks = fetch_all_points(image_json["faces"][0]["landmarks"])
@@ -64,12 +65,10 @@ def process_image(image_json, normalised_collection, normalised_width, normalise
     json = {"file_name": image_json["file_name"], "normalised_landmarks": normalised_landmarks,
             "binary_landmarks": binary_landmarks, "male_female": image_json["male_female"]}
 
-    # result = normalised_collection.insert_one(json)
-    # print( "MongoDB ID: {}".format( result.inserted_id ) )
+    result = normalised_collection.insert_one(json)
+    print( "MongoDB ID: {}".format( result.inserted_id ) )
 
-    # print( json )
-
-    return
+    return json
 
 
 # -------------------------------
