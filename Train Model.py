@@ -6,7 +6,6 @@ import tensorflow as tf
 
 FLAGS = None
 
-
 def main(_):
     parser = configparser.ConfigParser()
     parser.read('faces.cfg')
@@ -38,22 +37,25 @@ def main(_):
         tf.nn.softmax_cross_entropy_with_logits(logits=y_predict,labels=y_truth))
     train_step = tf.train.GradientDescentOptimizer(0.5).minimize(cross_entropy)
 
-    sess = tf.InteractiveSession()
-    tf.global_variables_initializer().run()
-
-    saver = tf.train.Saver(max_to_keep=None)
-
     # Import data
     training_data = import_data(parser)
 
-    # Train
-    for step in range(10):
-        print("Training step {}".format(step))
-        batch_xs, batch_ys = get_random_sample(training_data, 1000)
-        # feed_dict is like named arguments for the accuracy function, our function requires x and y_truth as arguments
-        sess.run(train_step, feed_dict={x: batch_xs, y_truth: batch_ys})
+    saver = tf.train.Saver(max_to_keep=None)
 
-    saver.save(sess, parser.get("tensor_model", "model_path"))
+    with tf.Session() as sess:
+        sess.run(tf.global_variables_initializer())
+
+        # Train
+        for step in range(1000):
+            print("Training step {}".format(step))
+            image_binary_arrays, male_female_labels = get_random_sample(training_data, 100)
+            # feed_dict is like named arguments for the accuracy function, our function requires x and y_truth as arguments
+            train_step.run(feed_dict={x: image_binary_arrays, y_truth: male_female_labels})
+
+        saver.save(sess, parser.get("tensor_model", "model_path"))
+        print("Model saved to {}".format(parser.get("tensor_model", "model_path")))
+
+    return
 
 
 def import_data(parser):

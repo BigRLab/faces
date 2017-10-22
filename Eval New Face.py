@@ -20,19 +20,19 @@ def main(_):
     x = tf.placeholder(tf.float32, [None, binary_array_size])
     W = tf.Variable(tf.zeros([binary_array_size, 2]))
     b = tf.Variable(tf.zeros([2]))
-    y = tf.matmul(x, W) + b
-
-    sess = tf.InteractiveSession()
-    saver = tf.train.Saver(max_to_keep=None)
-
-    saver.restore(sess, parser.get("tensor_model", "model_path"))
+    y_predict = tf.matmul(x, W) + b
 
     # Import data
     binary_array = [ import_data(parser) ]
 
-    # feed_dict is like named arguments for the accuracy function
-    prediction = sess.run(y, feed_dict={x: binary_array})
-    translate_prediction(prediction[0])
+    saver = tf.train.Saver(max_to_keep=None)
+
+    with tf.Session() as sess:
+        saver.restore(sess, parser.get("tensor_model", "model_path"))
+
+        # feed_dict is like named arguments for the accuracy function
+        prediction = sess.run(y_predict, feed_dict={x: binary_array})
+        translate_prediction(prediction[0])
 
     return
 

@@ -4,7 +4,6 @@ import tensorflow as tf
 
 FLAGS = None
 
-
 def main(_):
     parser = configparser.ConfigParser()
     parser.read('faces.cfg')
@@ -18,29 +17,31 @@ def main(_):
     x = tf.placeholder(tf.float32, [None, binary_array_size])
     W = tf.Variable(tf.zeros([binary_array_size, 2]))
     b = tf.Variable(tf.zeros([2]))
-    y = tf.matmul(x, W) + b
+    y_predict = tf.matmul(x, W) + b
 
     # Define loss and optimizer
     y_truth = tf.placeholder(tf.float32, [None, 2])
 
-    sess = tf.InteractiveSession()
     saver = tf.train.Saver(max_to_keep=None)
-
-    saver.restore(sess, parser.get("tensor_model", "model_path"))
 
     # Import data
     eval_data = import_data(parser)
     pivoted_data = pivot_data(eval_data)
 
     # Test trained model
-    correct_prediction = tf.equal(tf.argmax(y, 1), tf.argmax(y_truth, 1))
+    correct_prediction = tf.equal(tf.argmax(y_predict, 1), tf.argmax(y_truth, 1))
     accuracy = tf.reduce_mean(tf.cast(correct_prediction, tf.float32))
-    images = pivoted_data[0]
-    labels = pivoted_data[1]
+    image_binary_arrays = pivoted_data[0]
+    male_female_labels = pivoted_data[1]
 
-    # feed_dict is like named arguments for the accuracy function, our function requires x and y_truth as arguments
-    accuracy_percentage = sess.run(accuracy, feed_dict={x: images, y_truth: labels})
-    print("Model accuracy: {}".format(accuracy_percentage))
+    with tf.Session() as sess:
+        saver.restore(sess, parser.get("tensor_model", "model_path"))
+
+        # feed_dict is like named arguments for the accuracy function, our function requires x and y_truth as arguments
+        accuracy_percentage = sess.run(accuracy, feed_dict={x: image_binary_arrays, y_truth: male_female_labels})
+        print("Model accuracy: {}".format(accuracy_percentage))
+
+    return
 
 
 def import_data(parser):
